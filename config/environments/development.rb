@@ -14,6 +14,10 @@ Rails.application.configure do
   # Show full error reports.
   config.consider_all_requests_local = true
 
+  # Docker bind mounts on macOS do not always emit file change events reliably.
+  # Polling ensures Rails reloads code on the next request without restarting.
+  config.file_watcher = ActiveSupport::FileUpdateChecker
+
   # Enable server timing
   config.server_timing = true
 

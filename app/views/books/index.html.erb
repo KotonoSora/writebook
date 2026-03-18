@@ -1,14 +1,14 @@
-<% content_for(:title) { "Library | Writebook" } %>
+<% content_for(:title) { "Library | #{app_name}" } %>
 <% @layout_class = "books" %>
 
 <% content_for :header do %>
   <nav>
     <span class="btn btn--placeholder" aria-hidden="true"></span>
 
-    <a href="https://once.com/writebook" class="product__wordmark btn btn--plain txt-large center" target="_blank">
-      <%= image_tag "writebook-icon.svg", aria: { hidden: true }, size: 24 %>
-      <span>Writebook</span>
-    </a>
+    <span class="product__wordmark btn btn--plain txt-large center" aria-label="<%= app_name %>">
+      <%= image_tag site_logo_asset, aria: { hidden: true }, size: 24 %>
+      <span><%= app_name %></span>
+    </span>
 
     <% if Current.user %>
       <%= link_to users_path, class: "btn" do %>

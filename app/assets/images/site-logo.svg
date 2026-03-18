@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Storynest Logo</title>
+  <desc id="desc">A geometric open-book mark.</desc>
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0f766e" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+  </defs>
+  <rect x="24" y="32" width="208" height="192" rx="30" fill="url(#g)" />
+  <path d="M64 88c22 0 40 7 56 22V188c-16-15-34-22-56-22V88z" fill="#ffffff" />
+  <path d="M192 88c-22 0-40 7-56 22V188c16-15 34-22 56-22V88z" fill="#dbeafe" />
+  <path d="M128 110v78" stroke="#0f172a" stroke-width="6" stroke-linecap="round" opacity="0.25" />
+</svg>

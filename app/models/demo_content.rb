@@ -7,7 +7,9 @@ class DemoContent
 
     private
       def create_book(user)
-        Book.create(title: "The Writebook Manual", author: "37signals", everyone_access: true).tap do |book|
+        app_name = ENV.fetch("APP_NAME", "Storynest")
+
+        Book.create(title: "The #{app_name} Manual", author: app_name, everyone_access: true).tap do |book|
           with_attachment("writebook-manual.jpg") { |attachment| book.cover.attach(attachment) }
           book.update_access(readers: [], editors: [ user.id ])
         end
