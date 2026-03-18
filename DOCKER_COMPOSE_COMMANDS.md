@@ -95,3 +95,10 @@ docker compose -f docker-compose.local.yml stop
 # or cleanup completely:
 # docker compose -f docker-compose.local.yml down
 ```
+
+---
+
+```bash
+# create secret key base
+openssl rand -hex 64
+```
