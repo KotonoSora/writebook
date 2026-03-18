@@ -1,5 +1,8 @@
+name: storynest-local
+
 services:
   writebook:
+    image: storynest/local:latest
     build:
       context: ..
     container_name: storynest_local

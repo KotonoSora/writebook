@@ -1,5 +1,8 @@
+name: storynest-prod
+
 services:
   writebook:
+    image: storynest/prod:latest
     build:
       context: ..
     container_name: storynest_prod
