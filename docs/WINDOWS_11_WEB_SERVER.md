@@ -89,6 +89,19 @@ Generate strong `SECRET_KEY_BASE` example:
 openssl rand -hex 64
 ```
 
+or
+
+```bash
+# Unix
+docker compose -f docker/docker-compose.local.yml run --rm -T --entrypoint /bin/sh writebook -lc "bin/rails secret; echo"
+
+# Windows 11
+docker compose -f docker/docker-compose.local.yml run --rm -T --entrypoint ruby writebook -e "require 'securerandom'; puts SecureRandom.hex(64)"
+
+git config core.autocrlf false
+git add --renormalize .
+```
+
 Notes:
 
 1. Keep `.env.prod` private.

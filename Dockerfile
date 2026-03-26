@@ -29,6 +29,9 @@ RUN bundle install && \
 # Copy application code
 COPY . .
 
+# Normalize script line endings in case files were checked out with CRLF on Windows.
+RUN sed -i 's/\r$//' ./bin/*
+
 # Precompiling assets for production without requiring secret RAILS_MASTER_KEY
 RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 
@@ -45,6 +48,14 @@ RUN apt-get update -qq && \
 COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --from=build /rails /rails
 
+# Use a stable wrapper so startup still works when host bind mounts are present.
+RUN printf '%s\n' \
+    '#!/bin/sh' \
+    'set -e' \
+    'if [ -d /rails/bin ]; then sed -i "s/\r$//" /rails/bin/* 2>/dev/null || true; fi' \
+    'exec /rails/bin/docker-entrypoint "$@"' \
+    > /usr/local/bin/entrypoint-wrapper && chmod +x /usr/local/bin/entrypoint-wrapper
+
 # Run and own only the runtime files as a non-root user for security
 RUN groupadd --system --gid 1000 rails && \
     useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
@@ -58,7 +69,7 @@ ARG GIT_REVISION
 ENV GIT_REVISION=$GIT_REVISION
 
 # Entrypoint prepares the application.
-ENTRYPOINT ["/rails/bin/docker-entrypoint"]
+ENTRYPOINT ["/usr/local/bin/entrypoint-wrapper"]
 
 # Start the server by default, this can be overwritten at runtime
 EXPOSE 80 443

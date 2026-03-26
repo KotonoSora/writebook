@@ -19,6 +19,7 @@ services:
 
     volumes:
       - ../:/rails:cached
+      - writebook_bin:/rails/bin
 
     restart: unless-stopped
 
@@ -28,3 +29,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
+
+volumes:
+  writebook_bin:
