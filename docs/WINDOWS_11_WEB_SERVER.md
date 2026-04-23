@@ -135,59 +135,126 @@ curl -I http://localhost:8080/session/new
 
 ## 6. Cloudflare Tunnel Setup
 
-Install cloudflared (Windows):
+To expose your app to the public internet, use Cloudflare Tunnel. You can run cloudflared natively on Windows or as a Docker container. Choose the method that fits your deployment.
 
-```powershell
-winget install --id Cloudflare.cloudflared
-```
+### 6a. Cloudflare Tunnel (Windows)
 
-Login:
+1. Install cloudflared:
+    ```powershell
+    winget install --id Cloudflare.cloudflared
+    ```
 
-```powershell
-cloudflared tunnel login
-```
+2. Login to Cloudflare:
+    ```powershell
+    cloudflared tunnel login
+    ```
 
-Create tunnel:
+3. Create a tunnel:
+    ```powershell
+    cloudflared tunnel create storynest-prod
+    ```
 
-```powershell
-cloudflared tunnel create storynest-prod
-```
+4. Create a DNS route (example):
+    ```powershell
+    cloudflared tunnel route dns storynest-prod books.yourdomain.com
+    ```
 
-Create DNS route (example):
+5. Create config file:
+    `C:\Users\YOUR_USER\.cloudflared\config.yml`
+    ```yml
+    tunnel: YOUR_TUNNEL_ID
+    credentials-file: C:/Users/YOUR_USER/.cloudflared/YOUR_TUNNEL_ID.json
 
-```powershell
-cloudflared tunnel route dns storynest-prod books.yourdomain.com
-```
+    ingress:
+      - hostname: books.yourdomain.com
+         service: http://localhost:8080
+      - service: http_status:404
+    ```
 
-Create config file:
+6. Run the tunnel:
+    ```powershell
+    cloudflared tunnel run storynest-prod
+    ```
 
-`C:\Users\YOUR_USER\.cloudflared\config.yml`
+7. Public URL:
+    `https://books.yourdomain.com`
 
-```yml
-tunnel: YOUR_TUNNEL_ID
-credentials-file: C:\Users\YOUR_USER\.cloudflared\YOUR_TUNNEL_ID.json
+---
 
-ingress:
-    - hostname: books.yourdomain.com
-        service: http://localhost:8080
-    - service: http_status:404
-```
+**Notes:**
+- Use `localhost:8080` for the service if running cloudflared natively on Windows.
+- If you want to run cloudflared as a Docker container, see the next section.
 
-Run tunnel:
+### 6b. Cloudflare Tunnel as a Docker Container
 
-```powershell
-cloudflared tunnel run storynest-prod
-```
+If you want to run Cloudflare Tunnel (cloudflared) as a Docker container (recommended for production automation), follow these steps:
 
-Public URL:
+1. **Create a user-defined Docker network (if not already):**
+    ```powershell
+    docker network create storynest-net
+    ```
 
-`https://books.yourdomain.com`
+2. **Ensure your production Compose file joins this network.**
+    Add the following to your `docker-compose.prod.yml`:
+    ```yaml
+    services:
+      writebook:
+         # ...existing config...
+         networks:
+            - storynest-net
+    networks:
+      storynest-net:
+         external: true
+    ```
 
-Optional Windows service:
+3. **Start your app stack:**
+    ```powershell
+    docker compose -f docker/docker-compose.prod.yml up -d --build
+    ```
 
-```powershell
-cloudflared service install
-```
+4. **Run cloudflared in a container on the same network:**
+
+        **Option 1: With local config file (advanced, for multiple tunnels or custom ingress):**
+        ```powershell
+        docker run -d --name cloudflared \
+            --network storynest-net \
+            -v C:/Users/YOUR_USER/.cloudflared:/etc/cloudflared \
+            cloudflare/cloudflared:latest tunnel run storynest-prod
+        ```
+
+        **Option 2: With Cloudflare token (simple, no local config needed):**
+        ```powershell
+        docker run -d --name cloudflared \
+            --network storynest-net \
+            cloudflare/cloudflared:latest tunnel --no-autoupdate run --token <YOUR_TOKEN_HERE>
+        ```
+
+        Replace `<YOUR_TOKEN_HERE>` with your Cloudflare Tunnel token. This method does not require a config file or volume mount.
+
+5. **Update your cloudflared config file (`C:/Users/YOUR_USER/.cloudflared/config.yml`):**
+    ```yml
+    tunnel: YOUR_TUNNEL_ID
+    credentials-file: C:/Users/YOUR_USER/.cloudflared/YOUR_TUNNEL_ID.json
+
+    ingress:
+      - hostname: books.yourdomain.com
+         service: http://storynest_prod:80
+      - service: http_status:404
+    ```
+
+6. **Public URL:**
+    `https://books.yourdomain.com`
+
+---
+
+**Notes:**
+- Use the Docker Compose service/container name (`storynest_prod`) and port 80 for the service in your config, not `localhost:8080`.
+- Both containers must be on the same Docker network for communication.
+- You can still use the Windows service method if running cloudflared natively, but for Dockerized cloudflared, use the above approach.
+
+
+
+
 
 ## 7. Update Process (Production)
 

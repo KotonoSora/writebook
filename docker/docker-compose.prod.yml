@@ -30,6 +30,13 @@ services:
       retries: 5
       start_period: 20s
 
+    networks:
+      - storynest-net
+
 volumes:
   writebook_storage:
   writebook_db:
+
+networks:
+  storynest-net:
+    external: true
