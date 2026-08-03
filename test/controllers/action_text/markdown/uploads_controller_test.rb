@@ -93,12 +93,53 @@ class ActionText::Markdown::UploadsControllerTest < ActionDispatch::IntegrationT
   end
 
   test "view attached file" do
+    books(:handbook).update! published: true
     attachment = attach_upload_to_welcome_page
 
     get action_text_markdown_upload_url(slug: attachment.slug)
 
     assert_response :redirect
     assert_match /\/rails\/active_storage\/.*\/reading\.webp/, @response.redirect_url
+  end
+
+  test "an attachment of a published book is publicly cacheable" do
+    books(:handbook).update! published: true
+    attachment = attach_upload_to_welcome_page
+
+    get action_text_markdown_upload_url(slug: attachment.slug)
+
+    assert_match "public", @response.headers["Cache-Control"]
+  end
+
+  test "an attachment of an unpublished book is not served to anonymous clients" do
+    books(:handbook).update! published: false
+    attachment = attach_upload_to_welcome_page
+
+    reset!
+    get action_text_markdown_upload_url(slug: attachment.slug)
+
+    assert_response :not_found
+  end
+
+  test "an attachment of an unpublished book is not served to a user without access" do
+    books(:handbook).update! published: false
+    attachment = attach_upload_to_welcome_page
+
+    accesses(:kevin_handbook).destroy!
+    get action_text_markdown_upload_url(slug: attachment.slug)
+
+    assert_response :not_found
+  end
+
+  test "an attachment of an unpublished book is served to a reader, but not publicly cached" do
+    books(:handbook).update! published: false
+    attachment = attach_upload_to_welcome_page
+
+    sign_in :jz
+    get action_text_markdown_upload_url(slug: attachment.slug)
+
+    assert_response :redirect
+    assert_no_match "public", @response.headers["Cache-Control"].to_s
   end
 
   private

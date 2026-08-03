@@ -6,6 +6,7 @@ class ActionText::Markdown::UploadsController < ApplicationController
   end
 
   before_action :set_record, :ensure_editable, only: :create
+  before_action :set_attachment, :ensure_attachment_readable, only: :show
 
   def create
     @markdown = @record.safe_markdown_attribute params[:attribute_name]
@@ -18,8 +19,12 @@ class ActionText::Markdown::UploadsController < ApplicationController
   end
 
   def show
-    @attachment = ActiveStorage::Attachment.find_by! slug: "#{params[:slug]}.#{params[:format]}"
-    expires_in 1.year, public: true
+    if @book&.published?
+      expires_in 1.year, public: true
+    else
+      expires_in 5.minutes, public: false
+    end
+
     redirect_to @attachment.url
   end
 
@@ -37,5 +42,17 @@ class ActionText::Markdown::UploadsController < ApplicationController
 
     def ensure_editable
       head :forbidden unless @book.editable?
+    end
+
+    def set_attachment
+      @attachment = ActiveStorage::Attachment.find_by! slug: "#{params[:slug]}.#{params[:format]}"
+      @book = @attachment.record.try(:record).try(:owning_book)
+    end
+
+    # An unpublished book's uploads are as private as the book itself. Serving them to
+    # anyone holding the URL made this a way to read them without an access row, and
+    # caching them publicly for a year put them in shared caches besides.
+    def ensure_attachment_readable
+      head :not_found unless @book.nil? || @book.published? || @book.accessable?
     end
 end
