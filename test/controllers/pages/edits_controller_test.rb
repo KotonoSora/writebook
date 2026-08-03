@@ -35,6 +35,50 @@ class Pages::EditsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match(/onerror/, response.body)
   end
 
+  test "a trashed page's history is not reachable" do
+    leaf = leaves(:welcome_page)
+    leaf.edit leafable_params: { body: "Embargoed announcement: Project X" }
+    leaf.trashed!
+
+    get page_edit_url(leaf, "latest")
+
+    assert_response :not_found
+  end
+
+  test "a trashed page's history is not reachable by a reader either" do
+    leaf = leaves(:welcome_page)
+    leaf.edit leafable_params: { body: "Embargoed announcement: Project X" }
+    leaf.trashed!
+
+    sign_in :jz
+    get page_edit_url(leaf, "latest")
+
+    assert_response :not_found
+  end
+
+  # Readers may still read the history of a live page. That is long-standing behavior
+  # and was assessed on its own terms: a reader can already read the page itself. The
+  # trashed case above is different, because that content is unreachable otherwise.
+  test "a reader may still read a live page's history" do
+    leaves(:welcome_page).edit leafable_params: { body: "Updated" }
+
+    sign_in :jz
+    get page_edit_url(leaves(:welcome_page), "latest")
+
+    assert_response :success
+  end
+
+  test "a user with no access to the book gets nothing" do
+    leaf = leaves(:welcome_page)
+    leaf.edit leafable_params: { body: "Updated" }
+    accesses(:jz_handbook).destroy!
+
+    sign_in :jz
+    get page_edit_url(leaf, "latest")
+
+    assert_response :not_found
+  end
+
   test "show sanitizes dangerous content in current version" do
     leaves(:welcome_page).edit leafable_params: { body: %(<img src=x onerror="alert(1)">) }
 
