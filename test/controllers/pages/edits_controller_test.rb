@@ -56,13 +56,18 @@ class Pages::EditsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  # Readers may still read the history of a live page. That is long-standing behavior
-  # and was assessed on its own terms: a reader can already read the page itself. The
-  # trashed case above is different, because that content is unreachable otherwise.
-  test "a reader may still read a live page's history" do
+  test "a reader can't read a live page's history" do
     leaves(:welcome_page).edit leafable_params: { body: "Updated" }
 
     sign_in :jz
+    get page_edit_url(leaves(:welcome_page), "latest")
+
+    assert_response :forbidden
+  end
+
+  test "an editor can still read a live page's history" do
+    leaves(:welcome_page).edit leafable_params: { body: "Updated" }
+
     get page_edit_url(leaves(:welcome_page), "latest")
 
     assert_response :success
