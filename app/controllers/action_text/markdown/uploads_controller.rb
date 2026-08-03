@@ -5,9 +5,9 @@ class ActionText::Markdown::UploadsController < ApplicationController
     ActiveStorage::Current.url_options = { protocol: request.protocol, host: request.host, port: request.port }
   end
 
-  def create
-    @record = GlobalID::Locator.locate_signed params[:record_gid]
+  before_action :set_record, :ensure_editable, only: :create
 
+  def create
     @markdown = @record.safe_markdown_attribute params[:attribute_name]
     @markdown.uploads.attach [ params[:file] ]
     @markdown.save!
@@ -22,4 +22,20 @@ class ActionText::Markdown::UploadsController < ApplicationController
     expires_in 1.year, public: true
     redirect_to @attachment.url
   end
+
+  private
+    # The signed id rendered into the page editor says who could upload when it was
+    # minted, not who may upload now. Resolve the book it belongs to and authorize
+    # against that, so revoking access takes effect here like it does everywhere else.
+    def set_record
+      @record = GlobalID::Locator.locate_signed params[:record_gid],
+        only: Page, for: ActionText::Markdown::UPLOADS_SIGNED_ID_PURPOSE
+      @book = Book.accessable_or_published.find_by(id: @record&.owning_book&.id)
+
+      head :not_found unless @book
+    end
+
+    def ensure_editable
+      head :forbidden unless @book.editable?
+    end
 end
