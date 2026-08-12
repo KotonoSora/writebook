@@ -85,7 +85,7 @@ class Books::SearchesControllerTest < ActionDispatch::IntegrationTest
         assert_pattern {
           result => {
             elements: [
-              { name: "strong", elements: [{ name: "mark", content: "findme" }] },
+              { name: "strong", elements: [ { name: "mark", content: "findme" } ] },
               { name: "mark", content: "findme" }
             ]
           }
@@ -95,7 +95,7 @@ class Books::SearchesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "search results strip dangerous tags from page body" do
-    pages(:welcome).update! body: 'findme <b>bold</b>'
+    pages(:welcome).update! body: "findme <b>bold</b>"
     leaves(:welcome_page).reindex
 
     post book_search_url(books(:handbook)), params: { search: "findme" }
@@ -117,7 +117,7 @@ class Books::SearchesControllerTest < ActionDispatch::IntegrationTest
 
   test "search results strip dangerous tags from page title" do
     leaf = leaves(:welcome_page)
-    leaf.update! title: 'findme <b>bold</b>'
+    leaf.update! title: "findme <b>bold</b>"
     leaf.reindex
 
     post book_search_url(books(:handbook)), params: { search: "findme" }
@@ -128,7 +128,7 @@ class Books::SearchesControllerTest < ActionDispatch::IntegrationTest
         assert_pattern {
           result => {
             elements: [
-              { name: "strong", elements: [{ name: "mark", content: "findme" }], content: "findme bold:" }
+              { name: "strong", elements: [ { name: "mark", content: "findme" } ], content: "findme bold:" }
             ]
           }
         }
